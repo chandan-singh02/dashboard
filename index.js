@@ -1,9 +1,9 @@
+const dotenv = require("dotenv");
+dotenv.config();
+require("./db/config");
 const express = require("express");
 
 const cors = require("cors");
-require("./db/config");
-const dotenv = require("dotenv");
-dotenv.config({ path: "./config.env" });
 
 const User = require("./db/User");
 const Product = require("./db/Product");
