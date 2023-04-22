@@ -2,10 +2,13 @@ const express = require("express");
 
 const cors = require("cors");
 require("./db/config");
+const dotenv = require("dotenv");
+dotenv.config({ path: "./config.env" });
+
 const User = require("./db/User");
 const Product = require("./db/Product");
 const Jwt = require("jsonwebtoken");
-const jwtKey = "e-com";
+
 const app = express();
 
 app.use(express.json());
@@ -16,24 +19,34 @@ app.post("/register", async (req, resp) => {
   let result = await user.save();
   result = result.toObject();
   delete result.password;
-  Jwt.sign({ result }, jwtKey, { expiresIn: "1h" }, (err, token) => {
-    if (err) {
-      resp.send("Something went wrong");
+  Jwt.sign(
+    { result },
+    process.env.JWTKEY,
+    { expiresIn: "1h" },
+    (err, token) => {
+      if (err) {
+        resp.send("Something went wrong");
+      }
+      resp.send({ result, auth: token });
     }
-    resp.send({ result, auth: token });
-  });
+  );
 });
 
 app.post("/login", async (req, resp) => {
   if (req.body.password && req.body.email) {
     let user = await User.findOne(req.body).select("-password");
     if (user) {
-      Jwt.sign({ user }, jwtKey, { expiresIn: "2h" }, (err, token) => {
-        if (err) {
-          resp.send("Something went wrong");
+      Jwt.sign(
+        { user },
+        process.env.JWTKEY,
+        { expiresIn: "2h" },
+        (err, token) => {
+          if (err) {
+            resp.send("Something went wrong");
+          }
+          resp.send({ user, auth: token });
         }
-        resp.send({ user, auth: token });
-      });
+      );
     } else {
       resp.send({ result: "No User found" });
     }
@@ -108,7 +121,7 @@ function verifyToken(req, resp, next) {
   if (token) {
     token = token.split(" ")[1];
     console.warn("middleware called");
-    Jwt.verify(token, jwtKey, (err, valid) => {
+    Jwt.verify(token, process.env.JWTKEY, (err, valid) => {
       if (err) {
         resp.status(401).send({ result: "please provide valid token" });
       } else {
